@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from app.database.database import Base, engine
 from app.routers import auth, vehiculos
 
-# Crear las tablas en la base de datos de forma automatica
+# Crear las tablas en la base de datos
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -14,10 +14,39 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configuracion de plantillas HTML con Jinja2
+
+# Criterio 2: Excepción personalizada del dominio
+class MotoLabDomainError(Exception):
+    def __init__(self, mensaje: str):
+        self.mensaje = mensaje
+
+
+@app.exception_handler(MotoLabDomainError)
+async def motolab_domain_exception_handler(
+    request: Request, exc: MotoLabDomainError
+):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"error": "Error de Dominio", "detalle": exc.mensaje},
+    )
+
+
+# Criterio 3: Manejador genérico (catch-all) para evitar exponer tracebacks
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "Error interno del servidor",
+            "detalle": "Ocurrio un error inesperado. Intente mas tarde.",
+        },
+    )
+
+
+# Configuracion de plantillas
 templates = Jinja2Templates(directory="app/templates")
 
-# Incluir los routers de la API
+# Routers de la API
 app.include_router(auth.router)
 app.include_router(vehiculos.router)
 

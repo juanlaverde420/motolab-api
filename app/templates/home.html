@@ -35,7 +35,7 @@
             const heroContent = document.getElementById('heroContent');
 
             if (token) {
-                // Estado: Sesión Iniciada
+                // Estado: Con Sesión (Muestra acceso a API y opción de salir)
                 navButtons.innerHTML = `
                     <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
                     <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar Sesión</button>
@@ -55,17 +55,15 @@
                     window.location.reload();
                 });
             } else {
-                // Estado: Sin Sesión
+                // Estado: Sin Sesión (Únicamente opción de iniciar sesión)
                 navButtons.innerHTML = `
-                    <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
                     <a href="/login" class="btn btn-primary btn-sm">Iniciar Sesión</a>
                 `;
 
                 heroContent.innerHTML = `
-                    <p class="text-muted">Inicie sesión para acceder a las funciones administrativas del taller.</p>
+                    <p class="text-muted fs-5">Debes iniciar sesión para acceder al panel y a la documentación de los endpoints.</p>
                     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
-                        <a href="/login" class="btn btn-primary btn-lg px-4 gap-3">Ir al Login</a>
-                        <a href="/docs" class="btn btn-outline-secondary btn-lg px-4">Ver Endpoints</a>
+                        <a href="/login" class="btn btn-primary btn-lg px-4 gap-3">Iniciar Sesión</a>
                     </div>
                 `;
             }

@@ -9,10 +9,9 @@
 <body class="bg-light">
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#">MotoLab API</a>
-            <div>
-                <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentacion API</a>
-                <a href="/login" class="btn btn-primary btn-sm">Iniciar Sesion</a>
+            <a class="navbar-brand fw-bold" href="/">MotoLab API</a>
+            <div id="navButtons">
+                <!-- Se llena dinámicamente mediante JS -->
             </div>
         </div>
     </nav>
@@ -20,14 +19,57 @@
     <div class="container text-center my-5">
         <div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
             <h1 class="display-5 fw-bold text-primary">Bienvenido a MotoLab API</h1>
-            <p class="fs-4 text-secondary mt-3">Sistema de gestion de mantenimiento vehicular para talleres de motocicletas.</p>
+            <p class="fs-4 text-secondary mt-3">Sistema de gestión de mantenimiento vehicular para talleres de motocicletas.</p>
             <hr class="my-4">
-            <p class="text-muted">Plataforma construida con FastAPI, SQLAlchemy, JWT y Bootstrap.</p>
-            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
-                <a href="/login" class="btn btn-primary btn-lg px-4 gap-3">Ir al Login</a>
-                <a href="/docs" class="btn btn-outline-secondary btn-lg px-4">Ver Endpoints (Swagger)</a>
+            
+            <div id="heroContent">
+                <!-- Estado predeterminado -->
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const navButtons = document.getElementById('navButtons');
+            const heroContent = document.getElementById('heroContent');
+
+            if (token) {
+                // Estado: Sesión Iniciada
+                navButtons.innerHTML = `
+                    <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
+                    <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar Sesión</button>
+                `;
+
+                heroContent.innerHTML = `
+                    <div class="alert alert-success d-inline-block px-4 py-2 mb-4" role="alert">
+                        <strong>Sesión activa.</strong> Has ingresado correctamente al sistema.
+                    </div>
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <a href="/docs" class="btn btn-primary btn-lg px-4 gap-3">Administrar Sistema (Swagger)</a>
+                    </div>
+                `;
+
+                document.getElementById('btnLogout').addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                });
+            } else {
+                // Estado: Sin Sesión
+                navButtons.innerHTML = `
+                    <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
+                    <a href="/login" class="btn btn-primary btn-sm">Iniciar Sesión</a>
+                `;
+
+                heroContent.innerHTML = `
+                    <p class="text-muted">Inicie sesión para acceder a las funciones administrativas del taller.</p>
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                        <a href="/login" class="btn btn-primary btn-lg px-4 gap-3">Ir al Login</a>
+                        <a href="/docs" class="btn btn-outline-secondary btn-lg px-4">Ver Endpoints</a>
+                    </div>
+                `;
+            }
+        });
+    </script>
 </body>
 </html>

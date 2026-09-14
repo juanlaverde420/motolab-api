@@ -37,20 +37,24 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
             const btnSubmit = document.getElementById('btnSubmit');
             const alertBox = document.getElementById('errorAlert');
 
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
             alertBox.classList.add('d-none');
 
+            // Criterio 2: Validación de campos vacíos
             if (!email || !password) {
-                alertBox.textContent = 'Todos los campos son obligatorios.';
+                alertBox.textContent = 'Por favor complete todos los campos obligatorios.';
                 alertBox.classList.remove('d-none');
                 return;
             }
 
-            // Deshabilitar botón mientras verifica
+            // Criterio 5: Deshabilitar botón y cambiar texto mientras verifica la sesión
             btnSubmit.disabled = true;
             btnSubmit.textContent = 'Ingresando...';
 
@@ -68,16 +72,19 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    // Guardar token e ingresar
                     localStorage.setItem('token', data.access_token);
-                    window.location.href = '/docs';
+                    // Criterio 6: Redirigir a la pantalla principal tras login exitoso
+                    window.location.href = '/';
                 } else {
-                    alertBox.textContent = data.detail || 'Error al iniciar sesión';
+                    // Criterio 4: Mensaje de error claro si el correo o la contraseña no coinciden
+                    alertBox.textContent = data.detail || 'Correo o contraseña incorrectos.';
                     alertBox.classList.remove('d-none');
                     btnSubmit.disabled = false;
                     btnSubmit.textContent = 'Iniciar Sesión';
                 }
             } catch (err) {
-                alertBox.textContent = 'Error de conexión con el servidor.';
+                alertBox.textContent = 'Error de conexión con el servidor. Intente nuevamente.';
                 alertBox.classList.remove('d-none');
                 btnSubmit.disabled = false;
                 btnSubmit.textContent = 'Iniciar Sesión';

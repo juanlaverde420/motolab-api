@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - MotoLab</title>
+    <title>Panel de Control - MotoLab API</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -11,16 +11,24 @@
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="/">MotoLab API</a>
             <div>
-                <a href="/docs" class="btn btn-outline-light btn-sm me-2">Swagger Docs</a>
+                <span id="userInfo" class="text-light me-3 badge bg-secondary"></span>
+                <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
                 <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar Sesión</button>
             </div>
         </div>
     </nav>
 
     <div class="container my-5">
+        <div id="adminBanner" class="alert alert-info d-none shadow-sm mb-4" role="alert">
+            <h5 class="alert-heading fw-bold mb-1">Modo Administrador Activo</h5>
+            <p class="mb-0 small">Tienes permisos totales para registrar, actualizar y eliminar registros del sistema de taller.</p>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Gestión de Vehículos</h2>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalVehiculo">+ Registrar Vehículo</button>
+            <button id="btnNuevoVehiculo" class="btn btn-success" onclick="abrirModalCrear()">
+                + Registrar Vehículo
+            </button>
         </div>
 
         <div class="card shadow-sm">
@@ -33,7 +41,7 @@
                                 <th>Placa</th>
                                 <th>Marca</th>
                                 <th>Modelo</th>
-                                <th>Propietario</th>
+                                <th>Propietario ID</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -46,16 +54,17 @@
         </div>
     </div>
 
-    <!-- Modal para Nuevo Vehículo -->
-    <div class="modal fade" id="modalVehiculo" tabindex="-1">
+    <!-- Modal para Crear / Editar Vehículo -->
+    <div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Registrar Nuevo Vehículo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="modalVehiculoLabel">Registrar Vehículo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="formVehiculo">
+                        <input type="hidden" id="vehiculoId">
                         <div class="mb-3">
                             <label class="form-label">Placa</label>
                             <input type="text" id="placa" class="form-control" placeholder="ABC123" required>
@@ -65,24 +74,55 @@
                             <input type="text" id="marca" class="form-control" placeholder="Yamaha" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Modelo</label>
-                            <input type="text" id="modelo" class="form-control" placeholder="XTZ 250" required>
+                            <label class="form-label">Modelo (Año)</label>
+                            <input type="number" id="modelo" class="form-control" placeholder="2023" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">ID Propietario</label>
                             <input type="number" id="propietarioId" class="form-control" placeholder="1" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Guardar Vehículo</button>
+                        <button type="submit" class="btn btn-primary w-100" id="btnGuardar">Guardar Vehículo</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <script href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/login';
+
+        let esAdmin = false;
+        let bsModal = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            bsModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
+            
+            const userData = parseJwt(token);
+            if (userData) {
+                esAdmin = userData.role === 'admin' || userData.is_admin === true || userData.sub === 'admin@motolab.com';
+                document.getElementById('userInfo').innerText = `Usuario: ${userData.sub || 'Sesión Activa'} (${esAdmin ? 'Admin' : 'Cliente'})`;
+                
+                if (esAdmin) {
+                    document.getElementById('adminBanner').classList.remove('d-none');
+                } else {
+                    document.getElementById('btnNuevoVehiculo').classList.add('d-none');
+                }
+            }
+            cargarVehiculos();
+        });
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                return JSON.parse(window.atob(base64));
+            } catch (e) {
+                return null;
+            }
+        }
 
         document.getElementById('btnLogout').addEventListener('click', () => {
             localStorage.removeItem('token');
@@ -94,13 +134,23 @@
                 const res = await fetch('/vehiculos', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (!res.ok) throw new Error('Error al obtener vehículos');
+                if (!res.ok) throw new Error('Error al obtener los vehículos');
                 const vehiculos = await res.json();
                 
                 const tbody = document.getElementById('tablaVehiculos');
                 tbody.innerHTML = '';
 
                 vehiculos.forEach(v => {
+                    let accionesHTML = '';
+                    if (esAdmin) {
+                        accionesHTML = `
+                            <button onclick="prepararEdicion(${v.id}, '${v.placa}', '${v.marca}', ${v.modelo}, ${v.propietario_id})" class="btn btn-sm btn-outline-primary me-1">Editar</button>
+                            <button onclick="eliminarVehiculo(${v.id})" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                        `;
+                    } else {
+                        accionesHTML = `<span class="badge bg-light text-dark">Solo lectura</span>`;
+                    }
+
                     tbody.innerHTML += `
                         <tr>
                             <td>${v.id}</td>
@@ -108,9 +158,7 @@
                             <td>${v.marca}</td>
                             <td>${v.modelo}</td>
                             <td>${v.propietario_id || 'N/A'}</td>
-                            <td class="text-center">
-                                <button onclick="eliminarVehiculo(${v.id})" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                            </td>
+                            <td class="text-center">${accionesHTML}</td>
                         </tr>
                     `;
                 });
@@ -119,42 +167,86 @@
             }
         }
 
+        function abrirModalCrear() {
+            document.getElementById('vehiculoId').value = '';
+            document.getElementById('placa').value = '';
+            document.getElementById('marca').value = '';
+            document.getElementById('modelo').value = '';
+            document.getElementById('propietarioId').value = '';
+            document.getElementById('modalVehiculoLabel').innerText = 'Registrar Vehículo';
+            document.getElementById('btnGuardar').innerText = 'Guardar Vehículo';
+            bsModal.show();
+        }
+
+        function prepararEdicion(id, placa, marca, modelo, propietarioId) {
+            document.getElementById('vehiculoId').value = id;
+            document.getElementById('placa').value = placa;
+            document.getElementById('marca').value = marca;
+            document.getElementById('modelo').value = modelo;
+            document.getElementById('propietarioId').value = propietarioId;
+            document.getElementById('modalVehiculoLabel').innerText = 'Editar Vehículo #' + id;
+            document.getElementById('btnGuardar').innerText = 'Actualizar Vehículo';
+            bsModal.show();
+        }
+
         document.getElementById('formVehiculo').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const id = document.getElementById('vehiculoId').value;
+            
             const data = {
-                placa: document.getElementById('placa').value,
-                marca: document.getElementById('marca').value,
-                modelo: document.getElementById('modelo').value,
-                propietario_id: parseInt(document.getElementById('propietarioId').value)
+                placa: document.getElementById('placa').value.trim(),
+                marca: document.getElementById('marca').value.trim(),
+                modelo: parseInt(document.getElementById('modelo').value, 10),
+                propietario_id: parseInt(document.getElementById('propietarioId').value, 10)
             };
 
-            const res = await fetch('/vehiculos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(data)
-            });
+            const url = id ? `/vehiculos/${id}` : '/vehiculos';
+            const method = id ? 'PUT' : 'POST';
 
-            if (res.ok) {
-                location.reload();
-            } else {
-                alert('Error al guardar el vehículo');
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    bsModal.hide();
+                    cargarVehiculos();
+                } else {
+                    const errData = await res.json();
+                    if (Array.isArray(errData.detail)) {
+                        const mensajes = errData.detail.map(err => `${err.loc[err.loc.length - 1]}: ${err.msg}`).join('\n');
+                        alert(`Error de validación:\n${mensajes}`);
+                    } else {
+                        alert(errData.detail || 'Error al procesar la solicitud');
+                    }
+                }
+            } catch (err) {
+                alert('Error de conexión con el servidor.');
             }
         });
 
         async function eliminarVehiculo(id) {
-            if (!confirm('¿Seguro que deseas eliminar este vehículo?')) return;
-            const res = await fetch(`/vehiculos/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) cargarVehiculos();
-            else alert('No tienes permisos o no se pudo eliminar');
+            if (!confirm(`¿Seguro que deseas eliminar el vehículo #${id}?`)) return;
+            try {
+                const res = await fetch(`/vehiculos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    cargarVehiculos();
+                } else {
+                    const errData = await res.json();
+                    alert(errData.detail || 'No tienes permisos para eliminar o ocurrió un error.');
+                }
+            } catch (err) {
+                alert('Error de conexión al intentar eliminar.');
+            }
         }
-
-        cargarVehiculos();
     </script>
 </body>
 </html>

@@ -4,45 +4,38 @@ from sqlalchemy.orm import relationship
 from app.database.database import Base
 
 
-class Vehiculo(Base):
-    __tablename__ = "vehiculos"
+class Moto(Base):
+    __tablename__ = "motos"
 
     id = Column(
         Integer,
         primary_key=True,
-        index=True
+        index=True,
     )
 
     placa = Column(
         String,
         unique=True,
         index=True,
-        nullable=False
+        nullable=False,
     )
 
     marca = Column(
         String,
-        nullable=False
+        nullable=False,
     )
 
     modelo = Column(
-        Integer,
-        nullable=False
-    )
-
-    propietario = Column(
         String,
-        nullable=False
+        nullable=False,
     )
 
-    user_id = Column(
+    owner_id = Column(
         Integer,
         ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
     )
 
-    # Cada vehículo pertenece a un usuario.
     owner = relationship(
         "User",
-        back_populates="vehiculos"
     )

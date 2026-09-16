@@ -35,8 +35,9 @@
             const heroContent = document.getElementById('heroContent');
 
             if (token) {
-                // Estado: Con Sesión (Muestra acceso a API y opción de salir)
+                // Estado: Con Sesión
                 navButtons.innerHTML = `
+                    <a href="/dashboard" class="btn btn-outline-light btn-sm me-2">Gestionar Vehículos</a>
                     <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
                     <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar Sesión</button>
                 `;
@@ -46,7 +47,8 @@
                         <strong>Sesión activa.</strong> Has ingresado correctamente al sistema.
                     </div>
                     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-                        <a href="/docs" class="btn btn-primary btn-lg px-4 gap-3">Administrar Sistema (Swagger)</a>
+                        <a href="/dashboard" class="btn btn-primary btn-lg px-4 gap-3">Gestionar Vehículos</a>
+                        <a href="/docs" class="btn btn-outline-secondary btn-lg px-4 gap-3">Documentación (Swagger)</a>
                     </div>
                 `;
 
@@ -55,13 +57,13 @@
                     window.location.reload();
                 });
             } else {
-                // Estado: Sin Sesión (Únicamente opción de iniciar sesión)
+                // Estado: Sin Sesión
                 navButtons.innerHTML = `
                     <a href="/login" class="btn btn-primary btn-sm">Iniciar Sesión</a>
                 `;
 
                 heroContent.innerHTML = `
-                    <p class="text-muted fs-5">Debes iniciar sesión para acceder al panel y a la documentación de los endpoints.</p>
+                    <p class="text-muted fs-5">Debes iniciar sesión para acceder al panel y a la gestión del taller.</p>
                     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
                         <a href="/login" class="btn btn-primary btn-lg px-4 gap-3">Iniciar Sesión</a>
                     </div>

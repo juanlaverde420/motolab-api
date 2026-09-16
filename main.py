@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database.database import Base, engine
@@ -15,7 +16,7 @@ app = FastAPI(
 )
 
 
-# Criterio 2: Excepción personalizada del dominio
+# Excepcion personalizada de dominio
 class MotoLabDomainError(Exception):
     def __init__(self, mensaje: str):
         self.mensaje = mensaje
@@ -31,7 +32,7 @@ async def motolab_domain_exception_handler(
     )
 
 
-# Criterio 3: Manejador genérico (catch-all) para evitar exponer tracebacks
+# Manejador generico catch-all para evitar exponer tracebacks
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
@@ -64,4 +65,12 @@ def vista_home(request: Request):
 def vista_login(request: Request):
     return templates.TemplateResponse(
         request=request, name="login.html", context={}
+    )
+
+
+# Vista de Dashboard / Gestion de Vehiculos
+@app.get("/dashboard", response_class=HTMLResponse)
+def vista_dashboard(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="dashboard.html", context={}
     )

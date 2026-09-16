@@ -7,7 +7,7 @@ from app.controllers import moto_controller
 from app.core.security import get_current_user
 from app.database.database import get_db
 from app.models.user import User
-from app.schemas.moto import MotoCreate, MotoOut
+from app.schemas.moto import MotoCreate, MotoOut, MotoUpdate
 
 
 router = APIRouter(
@@ -79,14 +79,14 @@ def create_moto(
 )
 def update_moto(
     moto_id: int,
-    moto: MotoCreate,
+    moto: MotoUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     moto_db = moto_controller.update_moto(
         db,
         moto_id,
-        moto.model_dump(),
+        moto.model_dump(exclude_unset=True),
     )
 
     if not moto_db:

@@ -19,14 +19,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-
-# Archivos estáticos y plantillas HTML.
-app.mount(
-    "/static",
-    StaticFiles(directory="app/static"),
-    name="static",
-)
-
 templates = Jinja2Templates(
     directory="app/templates"
 )

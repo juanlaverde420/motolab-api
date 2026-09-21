@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.database.database import Base, engine
@@ -57,6 +57,18 @@ def view_home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="home.html",
+    )
+
+
+# Vista del dashboard.
+@app.get(
+    "/dashboard",
+    tags=["Vistas Web"],
+)
+def view_dashboard(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
     )
 
 

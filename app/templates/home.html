@@ -9,7 +9,7 @@
 <body class="bg-light">
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="/">MotoLab API</a>
+            <a class="navbar-brand fw-bold" href="/home">MotoLab API</a>
             <div id="navButtons">
                 <!-- Se llena dinámicamente mediante JS -->
             </div>
@@ -37,7 +37,7 @@
             if (token) {
                 // Estado: Con Sesión
                 navButtons.innerHTML = `
-                    <a href="/docs" class="btn btn-outline-light btn-sm me-2">Gestionar Vehículos</a>
+                    <a href="/dashboard" class="btn btn-outline-light btn-sm me-2">Gestionar Vehículos</a>
                     <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
                     <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar Sesión</button>
                 `;
@@ -47,7 +47,7 @@
                         <strong>Sesión activa.</strong> Has ingresado correctamente al sistema.
                     </div>
                     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-                        <a href="/docs" class="btn btn-primary btn-lg px-4 gap-3">Gestionar Vehículos</a>
+                        <a href="/dashboard" class="btn btn-primary btn-lg px-4 gap-3">Gestionar Vehículos</a>
                         <a href="/docs" class="btn btn-outline-secondary btn-lg px-4 gap-3">Documentación (Swagger)</a>
                     </div>
                 `;

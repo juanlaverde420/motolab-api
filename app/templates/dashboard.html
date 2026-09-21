@@ -9,11 +9,11 @@
 <body class="bg-light">
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="/">MotoLab API</a>
+            <a class="navbar-brand fw-bold" href="/home">MotoLab API</a>
             <div>
                 <span id="userInfo" class="text-light me-3 badge bg-secondary"></span>
-                <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentación API</a>
-                <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar Sesión</button>
+                <a href="/docs" class="btn btn-outline-light btn-sm me-2">Documentacion API</a>
+                <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar Sesion</button>
             </div>
         </div>
     </nav>
@@ -25,9 +25,9 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Gestión de Vehículos</h2>
+            <h2>Gestion de Vehiculos</h2>
             <button id="btnNuevoVehiculo" class="btn btn-success" onclick="abrirModalCrear()">
-                + Registrar Vehículo
+                + Registrar Vehiculo
             </button>
         </div>
 
@@ -46,7 +46,7 @@
                             </tr>
                         </thead>
                         <tbody id="tablaVehiculos">
-                            <!-- Se llena dinámicamente -->
+                            <!-- Se llena dinamicamente -->
                         </tbody>
                     </table>
                 </div>
@@ -54,12 +54,12 @@
         </div>
     </div>
 
-    <!-- Modal para Crear / Editar Vehículo -->
+    <!-- Modal para Crear / Editar Vehiculo -->
     <div class="modal fade" id="modalVehiculo" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalVehiculoLabel">Registrar Vehículo</h5>
+                    <h5 class="modal-title" id="modalVehiculoLabel">Registrar Vehiculo</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -74,14 +74,10 @@
                             <input type="text" id="marca" class="form-control" placeholder="Yamaha" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Modelo (Año)</label>
-                            <input type="number" id="modelo" class="form-control" placeholder="2023" required>
+                            <label class="form-label">Modelo (Ano)</label>
+                            <input type="text" id="modelo" class="form-control" placeholder="2023" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">ID Propietario</label>
-                            <input type="number" id="propietarioId" class="form-control" placeholder="1" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100" id="btnGuardar">Guardar Vehículo</button>
+                        <button type="submit" class="btn btn-primary w-100" id="btnGuardar">Guardar Vehiculo</button>
                     </form>
                 </div>
             </div>
@@ -92,7 +88,7 @@
     
     <script>
         const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/login';
+        if (!token) window.location.href = '/';
 
         let esAdmin = false;
         let bsModal = null;
@@ -103,12 +99,10 @@
             const userData = parseJwt(token);
             if (userData) {
                 esAdmin = userData.role === 'admin' || userData.is_admin === true || userData.sub === 'admin@motolab.com';
-                document.getElementById('userInfo').innerText = `Usuario: ${userData.sub || 'Sesión Activa'} (${esAdmin ? 'Admin' : 'Cliente'})`;
+                document.getElementById('userInfo').innerText = `Usuario: ${userData.sub || 'Sesion Activa'} (${esAdmin ? 'Admin' : 'Cliente'})`;
                 
                 if (esAdmin) {
                     document.getElementById('adminBanner').classList.remove('d-none');
-                } else {
-                    document.getElementById('btnNuevoVehiculo').classList.add('d-none');
                 }
             }
             cargarVehiculos();
@@ -126,15 +120,15 @@
 
         document.getElementById('btnLogout').addEventListener('click', () => {
             localStorage.removeItem('token');
-            window.location.href = '/login';
+            window.location.href = '/';
         });
 
         async function cargarVehiculos() {
             try {
-                const res = await fetch('/vehiculos', {
+                const res = await fetch('/api/motos', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (!res.ok) throw new Error('Error al obtener los vehículos');
+                if (!res.ok) throw new Error('Error al obtener los vehiculos');
                 const vehiculos = await res.json();
                 
                 const tbody = document.getElementById('tablaVehiculos');
@@ -144,7 +138,7 @@
                     let accionesHTML = '';
                     if (esAdmin) {
                         accionesHTML = `
-                            <button onclick="prepararEdicion(${v.id}, '${v.placa}', '${v.marca}', ${v.modelo}, ${v.propietario_id})" class="btn btn-sm btn-outline-primary me-1">Editar</button>
+                            <button onclick="prepararEdicion(${v.id}, '${v.placa}', '${v.marca}', '${v.modelo}')" class="btn btn-sm btn-outline-primary me-1">Editar</button>
                             <button onclick="eliminarVehiculo(${v.id})" class="btn btn-sm btn-outline-danger">Eliminar</button>
                         `;
                     } else {
@@ -157,7 +151,7 @@
                             <td><strong>${v.placa}</strong></td>
                             <td>${v.marca}</td>
                             <td>${v.modelo}</td>
-                            <td>${v.propietario_id || 'N/A'}</td>
+                            <td>${v.owner_id || 'N/A'}</td>
                             <td class="text-center">${accionesHTML}</td>
                         </tr>
                     `;
@@ -172,20 +166,18 @@
             document.getElementById('placa').value = '';
             document.getElementById('marca').value = '';
             document.getElementById('modelo').value = '';
-            document.getElementById('propietarioId').value = '';
-            document.getElementById('modalVehiculoLabel').innerText = 'Registrar Vehículo';
-            document.getElementById('btnGuardar').innerText = 'Guardar Vehículo';
+            document.getElementById('modalVehiculoLabel').innerText = 'Registrar Vehiculo';
+            document.getElementById('btnGuardar').innerText = 'Guardar Vehiculo';
             bsModal.show();
         }
 
-        function prepararEdicion(id, placa, marca, modelo, propietarioId) {
+        function prepararEdicion(id, placa, marca, modelo) {
             document.getElementById('vehiculoId').value = id;
             document.getElementById('placa').value = placa;
             document.getElementById('marca').value = marca;
             document.getElementById('modelo').value = modelo;
-            document.getElementById('propietarioId').value = propietarioId;
-            document.getElementById('modalVehiculoLabel').innerText = 'Editar Vehículo #' + id;
-            document.getElementById('btnGuardar').innerText = 'Actualizar Vehículo';
+            document.getElementById('modalVehiculoLabel').innerText = 'Editar Vehiculo #' + id;
+            document.getElementById('btnGuardar').innerText = 'Actualizar Vehiculo';
             bsModal.show();
         }
 
@@ -196,11 +188,10 @@
             const data = {
                 placa: document.getElementById('placa').value.trim(),
                 marca: document.getElementById('marca').value.trim(),
-                modelo: parseInt(document.getElementById('modelo').value, 10),
-                propietario_id: parseInt(document.getElementById('propietarioId').value, 10)
+                modelo: document.getElementById('modelo').value.trim()
             };
 
-            const url = id ? `/vehiculos/${id}` : '/vehiculos';
+            const url = id ? `/api/motos/${id}` : '/api/motos';
             const method = id ? 'PUT' : 'POST';
 
             try {
@@ -220,20 +211,20 @@
                     const errData = await res.json();
                     if (Array.isArray(errData.detail)) {
                         const mensajes = errData.detail.map(err => `${err.loc[err.loc.length - 1]}: ${err.msg}`).join('\n');
-                        alert(`Error de validación:\n${mensajes}`);
+                        alert(`Error de validacion:\n${mensajes}`);
                     } else {
                         alert(errData.detail || 'Error al procesar la solicitud');
                     }
                 }
             } catch (err) {
-                alert('Error de conexión con el servidor.');
+                alert('Error de conexion con el servidor.');
             }
         });
 
         async function eliminarVehiculo(id) {
-            if (!confirm(`¿Seguro que deseas eliminar el vehículo #${id}?`)) return;
+            if (!confirm(`¿Seguro que deseas eliminar el vehiculo #${id}?`)) return;
             try {
-                const res = await fetch(`/vehiculos/${id}`, {
+                const res = await fetch(`/api/motos/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -241,10 +232,10 @@
                     cargarVehiculos();
                 } else {
                     const errData = await res.json();
-                    alert(errData.detail || 'No tienes permisos para eliminar o ocurrió un error.');
+                    alert(errData.detail || 'No tienes permisos para eliminar o ocurrio un error.');
                 }
             } catch (err) {
-                alert('Error de conexión al intentar eliminar.');
+                alert('Error de conexion al intentar eliminar.');
             }
         }
     </script>

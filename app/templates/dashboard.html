@@ -24,11 +24,25 @@
             <p class="mb-0 small">Tienes permisos totales para registrar, actualizar y eliminar registros del sistema de taller.</p>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>Gestion de Vehiculos</h2>
             <button id="btnNuevoVehiculo" class="btn btn-success" onclick="abrirModalCrear()">
                 + Registrar Vehiculo
             </button>
+        </div>
+
+        <!-- Barra de Búsqueda y Filtros -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body bg-white rounded">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-8">
+                        <input type="text" id="inputBusqueda" class="form-control" placeholder="Buscar por placa, marca, modelo o ID propietario...">
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-outline-secondary w-100" onclick="limpiarFiltros()">Limpiar Filtro</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="card shadow-sm">
@@ -92,6 +106,7 @@
 
         let esAdmin = false;
         let bsModal = null;
+        let todosLosVehiculos = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             bsModal = new bootstrap.Modal(document.getElementById('modalVehiculo'));
@@ -105,6 +120,8 @@
                     document.getElementById('adminBanner').classList.remove('d-none');
                 }
             }
+
+            document.getElementById('inputBusqueda').addEventListener('input', aplicarFiltro);
             cargarVehiculos();
         });
 
@@ -129,36 +146,75 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) throw new Error('Error al obtener los vehiculos');
-                const vehiculos = await res.json();
-                
-                const tbody = document.getElementById('tablaVehiculos');
-                tbody.innerHTML = '';
-
-                vehiculos.forEach(v => {
-                    let accionesHTML = '';
-                    if (esAdmin) {
-                        accionesHTML = `
-                            <button onclick="prepararEdicion(${v.id}, '${v.placa}', '${v.marca}', '${v.modelo}')" class="btn btn-sm btn-outline-primary me-1">Editar</button>
-                            <button onclick="eliminarVehiculo(${v.id})" class="btn btn-sm btn-outline-danger">Eliminar</button>
-                        `;
-                    } else {
-                        accionesHTML = `<span class="badge bg-light text-dark">Solo lectura</span>`;
-                    }
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${v.id}</td>
-                            <td><strong>${v.placa}</strong></td>
-                            <td>${v.marca}</td>
-                            <td>${v.modelo}</td>
-                            <td>${v.owner_id || 'N/A'}</td>
-                            <td class="text-center">${accionesHTML}</td>
-                        </tr>
-                    `;
-                });
+                todosLosVehiculos = await res.json();
+                renderizarTabla(todosLosVehiculos);
             } catch (err) {
                 alert(err.message);
             }
+        }
+
+        function renderizarTabla(vehiculos) {
+            const tbody = document.getElementById('tablaVehiculos');
+            tbody.innerHTML = '';
+
+            if (vehiculos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-3 text-muted">No se encontraron vehiculos registrados o coincidentes.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            vehiculos.forEach(v => {
+                let accionesHTML = '';
+                if (esAdmin) {
+                    accionesHTML = `
+                        <button onclick="prepararEdicion(${v.id}, '${v.placa}', '${v.marca}', '${v.modelo}')" class="btn btn-sm btn-outline-primary me-1">Editar</button>
+                        <button onclick="eliminarVehiculo(${v.id})" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                    `;
+                } else {
+                    accionesHTML = `<span class="badge bg-light text-dark">Solo lectura</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${v.id}</td>
+                        <td><strong>${v.placa}</strong></td>
+                        <td>${v.marca}</td>
+                        <td>${v.modelo}</td>
+                        <td>${v.owner_id || 'N/A'}</td>
+                        <td class="text-center">${accionesHTML}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function aplicarFiltro() {
+            const busqueda = document.getElementById('inputBusqueda').value.toLowerCase().trim();
+            if (!busqueda) {
+                renderizarTabla(todosLosVehiculos);
+                return;
+            }
+
+            const vehiculosFiltrados = todosLosVehiculos.filter(v => {
+                const placa = (v.placa || '').toLowerCase();
+                const marca = (v.marca || '').toLowerCase();
+                const modelo = String(v.modelo || '').toLowerCase();
+                const owner = String(v.owner_id || '').toLowerCase();
+
+                return placa.includes(busqueda) || 
+                       marca.includes(busqueda) || 
+                       modelo.includes(busqueda) || 
+                       owner.includes(busqueda);
+            });
+
+            renderizarTabla(vehiculosFiltrados);
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('inputBusqueda').value = '';
+            renderizarTabla(todosLosVehiculos);
         }
 
         function abrirModalCrear() {
